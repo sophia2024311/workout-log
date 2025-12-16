@@ -128,11 +128,27 @@
             cursor: pointer;
             transition: all 0.3s;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
         }
 
         .exercise-chip.selected {
             background: #667eea;
             color: white;
+        }
+
+        .exercise-chip-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+
+        .exercise-chip-name {
+            font-weight: 600;
         }
 
         .exercise-info {
@@ -608,6 +624,55 @@
             padding-top: 20px;
             border-top: 2px solid #e0e0e0;
         }
+
+        .image-upload-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .image-preview {
+            width: 150px;
+            height: 150px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin: 10px 0;
+            border: 2px solid #e0e0e0;
+        }
+
+        .image-placeholder {
+            width: 150px;
+            height: 150px;
+            border-radius: 10px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            margin: 10px 0;
+            border: 2px dashed #ccc;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -619,6 +684,11 @@
             <div class="card">
                 <h2 style="margin-bottom: 15px; color: #333;">오늘의 운동 계획</h2>
                 
+                <div class="input-group">
+                    <label>운동 날짜</label>
+                    <input type="date" id="workoutDate" value="">
+                </div>
+
                 <button class="btn-secondary" onclick="openExerciseModal()" style="margin-bottom: 15px;">+ 새 운동 추가</button>
                 <button class="btn-secondary" onclick="openManageExercisesModal()" style="margin-bottom: 15px;">⚙️ 운동 관리</button>
 
@@ -728,16 +798,42 @@
         <!-- 운동 상세보기 모달 -->
         <div id="exerciseDetailModal" class="modal">
             <div class="modal-content exercise-detail-modal">
-                <h3 id="detailExerciseName"></h3>
+                <h3>운동 상세 정보</h3>
                 
-                <div class="exercise-info-row">
-                    <span>운동 종류:</span>
-                    <span id="detailExerciseType"></span>
+                <div class="input-group">
+                    <label>운동 이름</label>
+                    <input type="text" id="detailExerciseName" style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 12px; font-size: 16px;">
                 </div>
-                
-                <div class="exercise-info-row">
-                    <span>타겟 부위:</span>
-                    <span id="detailExerciseTarget"></span>
+
+                <div class="input-group">
+                    <label>운동 종류</label>
+                    <select id="detailExerciseType" style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 12px; font-size: 16px;">
+                        <option value="strength">근력 운동</option>
+                        <option value="cardio">유산소 운동</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>타겟 부위</label>
+                    <select id="detailExerciseTarget" style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 12px; font-size: 16px;">
+                        <option value="가슴">가슴</option>
+                        <option value="등">등</option>
+                        <option value="어깨">어깨</option>
+                        <option value="팔">팔</option>
+                        <option value="복근">복근</option>
+                        <option value="하체">하체</option>
+                        <option value="전신">전신</option>
+                    </select>
+                </div>
+
+                <div class="image-upload-section">
+                    <label>운동 이미지</label>
+                    <div id="imagePreviewContainer"></div>
+                    <div class="file-input-wrapper">
+                        <label for="exerciseImageInput" class="file-input-label">📷 이미지 선택</label>
+                        <input type="file" id="exerciseImageInput" accept="image/*" onchange="handleImageUpload(event)">
+                    </div>
+                    <button class="btn-secondary" onclick="removeExerciseImage()" style="margin-left: 10px; width: auto; padding: 10px 20px;">이미지 삭제</button>
                 </div>
 
                 <div class="memo-section">
@@ -745,7 +841,7 @@
                     <textarea id="detailExerciseMemo" class="memo-textarea" placeholder="이 운동에 대한 메모를 작성하세요..."></textarea>
                 </div>
 
-                <button class="btn-primary" onclick="saveExerciseMemo()">저장</button>
+                <button class="btn-primary" onclick="saveExerciseDetail()">저장</button>
                 <button class="btn-secondary" onclick="closeExerciseDetailModal()">닫기</button>
             </div>
         </div>
@@ -767,13 +863,13 @@
 
     <script>
         let exercises = JSON.parse(localStorage.getItem('exercises')) || [
-            {name: '벤치프레스', type: 'strength', target: '가슴', memo: ''},
-            {name: '스쿼트', type: 'strength', target: '하체', memo: ''},
-            {name: '데드리프트', type: 'strength', target: '등', memo: ''},
-            {name: '숄더프레스', type: 'strength', target: '어깨', memo: ''},
-            {name: '랫풀다운', type: 'strength', target: '등', memo: ''},
-            {name: '런닝', type: 'cardio', target: '전신', memo: ''},
-            {name: '사이클', type: 'cardio', target: '하체', memo: ''}
+            {name: '벤치프레스', type: 'strength', target: '가슴', memo: '', image: ''},
+            {name: '스쿼트', type: 'strength', target: '하체', memo: '', image: ''},
+            {name: '데드리프트', type: 'strength', target: '등', memo: '', image: ''},
+            {name: '숄더프레스', type: 'strength', target: '어깨', memo: '', image: ''},
+            {name: '랫풀다운', type: 'strength', target: '등', memo: '', image: ''},
+            {name: '런닝', type: 'cardio', target: '전신', memo: '', image: ''},
+            {name: '사이클', type: 'cardio', target: '하체', memo: '', image: ''}
         ];
         let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
         let selectedExercises = [];
@@ -791,6 +887,10 @@
         function init() {
             renderExerciseGrid();
             showScreen('setupScreen');
+            
+            // 오늘 날짜를 기본값으로 설정
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('workoutDate').value = today;
         }
 
         function showScreen(screenId) {
@@ -820,8 +920,17 @@
                 if (selectedExercises.some(e => e.name === exercise.name)) {
                     chip.classList.add('selected');
                 }
+                
+                let imageHtml = '';
+                if (exercise.image) {
+                    imageHtml = `<img src="${exercise.image}" class="exercise-chip-image" alt="${exercise.name}">`;
+                } else {
+                    imageHtml = `<div class="exercise-chip-image" style="display: flex; align-items: center; justify-content: center; font-size: 24px;">💪</div>`;
+                }
+                
                 chip.innerHTML = `
-                    <div>${exercise.name}</div>
+                    ${imageHtml}
+                    <div class="exercise-chip-name">${exercise.name}</div>
                     <div class="exercise-info">${exercise.target}</div>
                 `;
                 chip.onclick = () => toggleExercise(exercise);
@@ -901,7 +1010,7 @@
                 return;
             }
 
-            exercises.push({name, type, target, memo: ''});
+            exercises.push({name, type, target, memo: '', image: ''});
             localStorage.setItem('exercises', JSON.stringify(exercises));
             
             closeExerciseModal();
@@ -909,31 +1018,130 @@
         }
 
         function openExerciseDetailModal(exercise) {
-            currentViewExercise = exercise;
-            document.getElementById('detailExerciseName').textContent = exercise.name;
-            document.getElementById('detailExerciseType').textContent = exercise.type === 'strength' ? '근력 운동' : '유산소 운동';
-            document.getElementById('detailExerciseTarget').textContent = exercise.target;
+            currentViewExercise = {...exercise}; // 복사본 생성
+            
+            document.getElementById('detailExerciseName').value = exercise.name;
+            document.getElementById('detailExerciseType').value = exercise.type;
+            document.getElementById('detailExerciseTarget').value = exercise.target;
             document.getElementById('detailExerciseMemo').value = exercise.memo || '';
+            
+            // 이미지 미리보기
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            if (exercise.image) {
+                imagePreviewContainer.innerHTML = `<img src="${exercise.image}" class="image-preview" alt="${exercise.name}">`;
+            } else {
+                imagePreviewContainer.innerHTML = `<div class="image-placeholder">이미지 없음</div>`;
+            }
+            
             document.getElementById('exerciseDetailModal').classList.add('active');
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 파일 크기 체크 (5MB 제한)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('이미지 파일은 5MB 이하여야 합니다.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+                imagePreviewContainer.innerHTML = `<img src="${e.target.result}" class="image-preview" alt="preview">`;
+                
+                // 임시로 currentViewExercise에 이미지 저장
+                if (currentViewExercise) {
+                    currentViewExercise.tempImage = e.target.result;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeExerciseImage() {
+            if (!currentViewExercise) return;
+            
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            imagePreviewContainer.innerHTML = `<div class="image-placeholder">이미지 없음</div>`;
+            currentViewExercise.tempImage = '';
+            
+            // 바로 저장
+            const exerciseIndex = exercises.findIndex(e => e.name === currentViewExercise.name);
+            if (exerciseIndex !== -1) {
+                exercises[exerciseIndex].image = '';
+                localStorage.setItem('exercises', JSON.stringify(exercises));
+            }
+        }
+
+        function saveExerciseDetail() {
+            if (!currentViewExercise) return;
+            
+            const newName = document.getElementById('detailExerciseName').value.trim();
+            const newType = document.getElementById('detailExerciseType').value;
+            const newTarget = document.getElementById('detailExerciseTarget').value;
+            const memo = document.getElementById('detailExerciseMemo').value;
+            
+            if (!newName) {
+                alert('운동 이름을 입력해주세요!');
+                return;
+            }
+            
+            // 기존 운동 찾기
+            const exerciseIndex = exercises.findIndex(e => e.name === currentViewExercise.name);
+            
+            if (exerciseIndex === -1) {
+                alert('운동을 찾을 수 없습니다!');
+                return;
+            }
+            
+            // 이름이 변경되었고, 새 이름이 이미 존재하는지 확인
+            if (newName !== currentViewExercise.name && exercises.some(e => e.name === newName)) {
+                alert('이미 존재하는 운동 이름입니다!');
+                return;
+            }
+            
+            // 운동 정보 업데이트
+            const oldName = exercises[exerciseIndex].name;
+            exercises[exerciseIndex].name = newName;
+            exercises[exerciseIndex].type = newType;
+            exercises[exerciseIndex].target = newTarget;
+            exercises[exerciseIndex].memo = memo;
+            
+            // 이미지도 함께 저장
+            if (currentViewExercise.tempImage !== undefined) {
+                exercises[exerciseIndex].image = currentViewExercise.tempImage;
+            }
+            
+            // 기존 운동 기록의 이름도 업데이트 (이름이 변경된 경우)
+            if (oldName !== newName) {
+                workouts.forEach(workout => {
+                    if (workout.exercise === oldName) {
+                        workout.exercise = newName;
+                    }
+                });
+                localStorage.setItem('workouts', JSON.stringify(workouts));
+                
+                // 선택된 운동 목록도 업데이트
+                selectedExercises.forEach(ex => {
+                    if (ex.name === oldName) {
+                        ex.name = newName;
+                        ex.type = newType;
+                        ex.target = newTarget;
+                    }
+                });
+            }
+            
+            localStorage.setItem('exercises', JSON.stringify(exercises));
+            alert('저장되었습니다!');
+            closeExerciseDetailModal();
+            renderExerciseGrid();
+            renderSelectedExercises();
         }
 
         function closeExerciseDetailModal() {
             document.getElementById('exerciseDetailModal').classList.remove('active');
             currentViewExercise = null;
-        }
-
-        function saveExerciseMemo() {
-            if (!currentViewExercise) return;
-            
-            const memo = document.getElementById('detailExerciseMemo').value;
-            const exerciseIndex = exercises.findIndex(e => e.name === currentViewExercise.name);
-            
-            if (exerciseIndex !== -1) {
-                exercises[exerciseIndex].memo = memo;
-                localStorage.setItem('exercises', JSON.stringify(exercises));
-                alert('메모가 저장되었습니다!');
-                closeExerciseDetailModal();
-            }
         }
 
         function openManageExercisesModal() {
@@ -969,17 +1177,15 @@
         function deleteExerciseByName(exerciseName) {
             const exercise = exercises.find(e => e.name === exerciseName);
             
-            if (confirm(`'${exerciseName}' 운동을 삭제하시겠습니까?\n(기존 운동 기록은 유지됩니다)`)) {
-                exercises = exercises.filter(e => e.name !== exerciseName);
-                localStorage.setItem('exercises', JSON.stringify(exercises));
-                
-                // 선택된 운동 목록에서도 제거
-                selectedExercises = selectedExercises.filter(e => e.name !== exerciseName);
-                
-                renderExerciseGrid();
-                renderSelectedExercises();
-                openManageExercisesModal(); // 모달 새로고침
-            }
+            exercises = exercises.filter(e => e.name !== exerciseName);
+            localStorage.setItem('exercises', JSON.stringify(exercises));
+            
+            // 선택된 운동 목록에서도 제거
+            selectedExercises = selectedExercises.filter(e => e.name !== exerciseName);
+            
+            renderExerciseGrid();
+            renderSelectedExercises();
+            openManageExercisesModal(); // 모달 새로고침
         }
 
         function closeManageExercisesModal() {
@@ -989,6 +1195,12 @@
         function startWorkout() {
             if (selectedExercises.length === 0) {
                 alert('운동을 선택해주세요!');
+                return;
+            }
+
+            const selectedDate = document.getElementById('workoutDate').value;
+            if (!selectedDate) {
+                alert('운동 날짜를 선택해주세요!');
                 return;
             }
 
@@ -1019,7 +1231,7 @@
                     }
                 }),
                 currentIndex: 0,
-                startTime: new Date()
+                startTime: new Date(selectedDate + 'T' + new Date().toTimeString().split(' ')[0])
             };
 
             showScreen('workoutScreen');
@@ -1255,6 +1467,11 @@
             };
             renderExerciseGrid();
             renderSelectedExercises();
+            
+            // 날짜를 오늘로 초기화
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('workoutDate').value = today;
+            
             showScreen('setupScreen');
         }
 
@@ -1413,19 +1630,24 @@
         }
 
         function deleteExerciseGroup(idsString) {
-            if (confirm('이 운동의 모든 세트를 삭제하시겠습니까?')) {
-                const ids = idsString.split(',').map(id => parseFloat(id));
-                workouts = workouts.filter(w => !ids.includes(w.id));
-                localStorage.setItem('workouts', JSON.stringify(workouts));
-                renderCalendar();
-                
-                if (selectedDate) {
-                    const workoutsOnDay = workouts.filter(w => {
-                        const workoutDate = new Date(w.date).toISOString().split('T')[0];
-                        return workoutDate === selectedDate;
-                    });
-                    selectDate(selectedDate, workoutsOnDay);
-                }
+            const ids = idsString.split(',').map(id => parseFloat(id));
+            console.log('삭제할 ID들:', ids);
+            console.log('삭제 전 workouts:', workouts.length);
+            
+            workouts = workouts.filter(w => !ids.includes(w.id));
+            
+            console.log('삭제 후 workouts:', workouts.length);
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+            
+            displayWorkouts();
+            renderCalendar();
+            
+            if (selectedDate) {
+                const workoutsOnDay = workouts.filter(w => {
+                    const workoutDate = new Date(w.date).toISOString().split('T')[0];
+                    return workoutDate === selectedDate;
+                });
+                selectDate(selectedDate, workoutsOnDay);
             }
         }
 
