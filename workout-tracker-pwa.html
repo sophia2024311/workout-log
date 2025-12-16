@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="헬스 기록">
+    <title>헬스 운동 기록</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .row .input-group {
+            flex: 1;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .exercise-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .exercise-chip {
+            padding: 12px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            background: white;
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .exercise-chip.selected {
+            background: #667eea;
+            color: white;
+        }
+
+        .exercise-info {
+            font-size: 11px;
+            margin-top: 4px;
+            opacity: 0.8;
+        }
+
+        .selected-exercises {
+            margin-top: 15px;
+        }
+
+        .selected-exercise-item {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .exercise-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .control-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .workout-session {
+            margin-top: 20px;
+        }
+
+        .current-exercise {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .current-exercise h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .progress-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .set-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .set-item.completed {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .set-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .set-number {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .check-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #28a745;
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .check-btn.unchecked {
+            background: #e0e0e0;
+            color: #999;
+        }
+
+        .set-inputs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .set-inputs input {
+            flex: 1;
+            padding: 10px;
+        }
+
+        .input-with-label {
+            flex: 1;
+        }
+
+        .input-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .workout-complete {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .workout-complete h2 {
+            color: #28a745;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .calendar {
+            margin-top: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .calendar-header button {
+            width: auto;
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .calendar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .calendar-day.header {
+            font-weight: 600;
+            color: #666;
+            cursor: default;
+        }
+
+        .calendar-day.empty {
+            cursor: default;
+        }
+
+        .calendar-day.active {
+            background: #f0f0f0;
+        }
+
+        .calendar-day.active:hover {
+            background: #e0e0e0;
+        }
+
+        .calendar-day.has-workout {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        .calendar-day.has-workout:hover {
+            transform: scale(1.1);
+        }
+
+        .calendar-day.today {
+            border: 2px solid #667eea;
+        }
+
+        .calendar-day.selected {
+            background: #764ba2;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .workout-count {
+            position: absolute;
+            bottom: 2px;
+            font-size: 10px;
+            opacity: 0.8;
+        }
+
+        .workout-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .workout-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .workout-name {
+            font-weight: 600;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .workout-details {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .workout-date {
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .delete-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .set-detail {
+            color: #666;
+            font-size: 14px;
+            padding: 5px 0;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+
+        .set-detail:last-child {
+            border-bottom: none;
+        }
+
+        .date-header {
+            color: #333;
+            font-size: 18px;
+            margin: 20px 0 10px 0;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .next-exercise-btn {
+            margin-top: 20px;
+        }
+
+        .set-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .add-set-btn {
+            background: #28a745;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .remove-set-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: auto;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 15px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-left: 5px;
+        }
+
+        .badge.strength {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge.cardio {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💪 헬스 운동 기록</h1>
+
+        <!-- 운동 선택 화면 -->
+        <div id="setupScreen" class="screen active">
+            <div class="card">
+                <h2 style="margin-bottom: 15px; color: #333;">오늘의 운동 계획</h2>
+                
+                <button class="btn-secondary" onclick="openExerciseModal()" style="margin-bottom: 15px;">+ 새 운동 추가</button>
+
+                <div class="input-group">
+                    <label>운동 선택 (여러 개 선택 가능)</label>
+                    <div class="filter-buttons" id="filterButtons">
+                        <button class="filter-btn active" onclick="filterExercises('all')">전체</button>
+                        <button class="filter-btn" onclick="filterExercises('strength')">근력</button>
+                        <button class="filter-btn" onclick="filterExercises('cardio')">유산소</button>
+                    </div>
+                    <div class="exercise-grid" id="exerciseGrid"></div>
+                </div>
+
+                <div class="selected-exercises" id="selectedExercises"></div>
+
+                <button class="btn-primary" onclick="startWorkout()" style="margin-top: 20px;">운동 시작하기</button>
+            </div>
+        </div>
+
+        <!-- 운동 진행 화면 -->
+        <div id="workoutScreen" class="screen">
+            <div class="card">
+                <div class="current-exercise" id="currentExercise"></div>
+                <div id="setsContainer"></div>
+                <button class="btn-primary next-exercise-btn" onclick="nextExercise()" id="nextBtn">다음 운동</button>
+                <button class="btn-secondary" onclick="showScreen('setupScreen')" style="margin-top: 10px;">🏠 홈으로 돌아가기</button>
+            </div>
+        </div>
+
+        <!-- 운동 완료 화면 -->
+        <div id="completeScreen" class="screen">
+            <div class="card">
+                <div class="workout-complete">
+                    <h2>🎉 운동 완료!</h2>
+                    <p style="color: #666; margin-bottom: 20px;">모든 운동을 완료했습니다!</p>
+                    <button class="btn-success" onclick="finishWorkout()">기록 저장하기</button>
+                    <button class="btn-secondary" onclick="resetWorkout()">🏠 홈으로 돌아가기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 기록 확인 화면 -->
+        <div id="historyScreen" class="screen">
+            <div class="card">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="switchHistoryTab('calendar')">📅 달력</button>
+                    <button class="tab-btn" onclick="switchHistoryTab('history')">📋 기록</button>
+                </div>
+
+                <div id="calendarTab" class="tab-content active">
+                    <div class="calendar">
+                        <div class="calendar-header">
+                            <button onclick="changeMonth(-1)">◀</button>
+                            <div class="calendar-title" id="calendarTitle"></div>
+                            <button onclick="changeMonth(1)">▶</button>
+                        </div>
+                        <div class="calendar-grid" id="calendarGrid"></div>
+                    </div>
+                    <div id="selectedDateWorkouts" style="margin-top: 20px;"></div>
+                </div>
+
+                <div id="historyTab" class="tab-content" style="display: none;">
+                    <h2 style="margin-bottom: 15px; color: #333;">전체 운동 기록</h2>
+                    <div id="workoutHistory"></div>
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="showScreen('setupScreen')">🏠 홈으로 돌아가기</button>
+        </div>
+
+        <!-- 운동 추가 모달 -->
+        <div id="exerciseModal" class="modal">
+            <div class="modal-content">
+                <h3>새 운동 추가</h3>
+                
+                <div class="input-group">
+                    <label>운동 이름</label>
+                    <input type="text" id="modalExerciseName" placeholder="예: 벤치프레스">
+                </div>
+
+                <div class="input-group">
+                    <label>운동 종류</label>
+                    <select id="modalExerciseType" onchange="updateModalInputs()">
+                        <option value="strength">근력 운동</option>
+                        <option value="cardio">유산소 운동</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>타겟 부위</label>
+                    <select id="modalExerciseTarget">
+                        <option value="가슴">가슴</option>
+                        <option value="등">등</option>
+                        <option value="어깨">어깨</option>
+                        <option value="팔">팔</option>
+                        <option value="복근">복근</option>
+                        <option value="하체">하체</option>
+                        <option value="전신">전신</option>
+                    </select>
+                </div>
+
+                <button class="btn-primary" onclick="saveNewExercise()">추가하기</button>
+                <button class="btn-secondary" onclick="closeExerciseModal()">취소</button>
+            </div>
+        </div>
+
+        <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 999;">
+            <button class="btn-secondary" onclick="showScreen('historyScreen'); renderCalendar();" style="padding: 12px 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">기록 보기</button>
+        </div>
+    </div>
+
+    <script>
+        let exercises = JSON.parse(localStorage.getItem('exercises')) || [
+            {name: '벤치프레스', type: 'strength', target: '가슴'},
+            {name: '스쿼트', type: 'strength', target: '하체'},
+            {name: '데드리프트', type: 'strength', target: '등'},
+            {name: '숄더프레스', type: 'strength', target: '어깨'},
+            {name: '랫풀다운', type: 'strength', target: '등'},
+            {name: '런닝', type: 'cardio', target: '전신'},
+            {name: '사이클', type: 'cardio', target: '하체'}
+        ];
+        let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
+        let selectedExercises = [];
+        let currentFilter = 'all';
+        let currentSession = {
+            exercises: [],
+            currentIndex: 0,
+            startTime: null
+        };
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+        let selectedDate = null;
+
+        function init() {
+            renderExerciseGrid();
+            showScreen('setupScreen');
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function filterExercises(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderExerciseGrid();
+        }
+
+        function renderExerciseGrid() {
+            const container = document.getElementById('exerciseGrid');
+            container.innerHTML = '';
+            
+            let filteredExercises = exercises;
+            if (currentFilter !== 'all') {
+                filteredExercises = exercises.filter(e => e.type === currentFilter);
+            }
+
+            filteredExercises.forEach(exercise => {
+                const chip = document.createElement('div');
+                chip.className = 'exercise-chip';
+                if (selectedExercises.some(e => e.name === exercise.name)) {
+                    chip.classList.add('selected');
+                }
+                chip.innerHTML = `
+                    <div>${exercise.name}</div>
+                    <div class="exercise-info">${exercise.target}</div>
+                `;
+                chip.onclick = () => toggleExercise(exercise);
+                container.appendChild(chip);
+            });
+        }
+
+        function toggleExercise(exercise) {
+            const index = selectedExercises.findIndex(e => e.name === exercise.name);
+            if (index > -1) {
+                selectedExercises.splice(index, 1);
+            } else {
+                selectedExercises.push({...exercise});
+            }
+            renderExerciseGrid();
+            renderSelectedExercises();
+        }
+
+        function renderSelectedExercises() {
+            const container = document.getElementById('selectedExercises');
+            if (selectedExercises.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '<label>선택된 운동 순서</label>';
+            selectedExercises.forEach((exercise, index) => {
+                html += `
+                    <div class="selected-exercise-item">
+                        <span>${index + 1}. ${exercise.name} <span class="badge ${exercise.type}">${exercise.type === 'strength' ? '근력' : '유산소'}</span></span>
+                        <div class="exercise-controls">
+                            ${index > 0 ? `<button class="control-btn" onclick="moveExercise(${index}, -1)">▲</button>` : ''}
+                            ${index < selectedExercises.length - 1 ? `<button class="control-btn" onclick="moveExercise(${index}, 1)">▼</button>` : ''}
+                            <button class="remove-btn" onclick="removeExercise(${index})">삭제</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function moveExercise(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= selectedExercises.length) return;
+            
+            [selectedExercises[index], selectedExercises[newIndex]] = [selectedExercises[newIndex], selectedExercises[index]];
+            renderSelectedExercises();
+        }
+
+        function removeExercise(index) {
+            selectedExercises.splice(index, 1);
+            renderExerciseGrid();
+            renderSelectedExercises();
+        }
+
+        function openExerciseModal() {
+            document.getElementById('exerciseModal').classList.add('active');
+        }
+
+        function closeExerciseModal() {
+            document.getElementById('exerciseModal').classList.remove('active');
+            document.getElementById('modalExerciseName').value = '';
+        }
+
+        function saveNewExercise() {
+            const name = document.getElementById('modalExerciseName').value.trim();
+            const type = document.getElementById('modalExerciseType').value;
+            const target = document.getElementById('modalExerciseTarget').value;
+
+            if (!name) {
+                alert('운동 이름을 입력해주세요!');
+                return;
+            }
+
+            if (exercises.some(e => e.name === name)) {
+                alert('이미 존재하는 운동입니다!');
+                return;
+            }
+
+            exercises.push({name, type, target});
+            localStorage.setItem('exercises', JSON.stringify(exercises));
+            
+            closeExerciseModal();
+            renderExerciseGrid();
+        }
+
+        function startWorkout() {
+            if (selectedExercises.length === 0) {
+                alert('운동을 선택해주세요!');
+                return;
+            }
+
+            currentSession = {
+                exercises: selectedExercises.map(exercise => {
+                    const lastWorkout = workouts
+                        .filter(w => w.exercise === exercise.name)
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                    
+                    if (exercise.type === 'strength') {
+                        return {
+                            ...exercise,
+                            sets: Array(3).fill(null).map(() => ({
+                                weight: lastWorkout ? lastWorkout.weight : 0,
+                                reps: lastWorkout ? lastWorkout.reps : 0,
+                                completed: false
+                            }))
+                        };
+                    } else {
+                        return {
+                            ...exercise,
+                            sets: Array(1).fill(null).map(() => ({
+                                distance: lastWorkout ? lastWorkout.distance : 0,
+                                duration: lastWorkout ? lastWorkout.duration : 0,
+                                completed: false
+                            }))
+                        };
+                    }
+                }),
+                currentIndex: 0,
+                startTime: new Date()
+            };
+
+            showScreen('workoutScreen');
+            renderCurrentExercise();
+        }
+
+        function renderCurrentExercise() {
+            const exercise = currentSession.exercises[currentSession.currentIndex];
+            const progress = `${currentSession.currentIndex + 1} / ${currentSession.exercises.length}`;
+            
+            document.getElementById('currentExercise').innerHTML = `
+                <h2>${exercise.name}</h2>
+                <div class="progress-info">${exercise.type === 'strength' ? '근력' : '유산소'} - ${exercise.target} | 운동 ${progress}</div>
+            `;
+
+            const container = document.getElementById('setsContainer');
+            let html = '';
+
+            if (exercise.type === 'strength') {
+                exercise.sets.forEach((set, index) => {
+                    html += `
+                        <div class="set-item ${set.completed ? 'completed' : ''}">
+                            <div class="set-header">
+                                <span class="set-number">${index + 1} 세트</span>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    ${exercise.sets.length > 1 ? `<button class="remove-set-btn" onclick="removeSet(${index}); return false;">세트 삭제</button>` : ''}
+                                    <button class="check-btn ${set.completed ? '' : 'unchecked'}" onclick="toggleSet(${index}); return false;">
+                                        ${set.completed ? '✓' : '○'}
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="set-inputs">
+                                <div class="input-with-label">
+                                    <div class="input-label">무게 (kg)</div>
+                                    <input type="number" placeholder="0" value="${set.weight}" 
+                                           onchange="updateSet(${index}, 'weight', this.value)" step="0.5">
+                                </div>
+                                <div class="input-with-label">
+                                    <div class="input-label">횟수 (회)</div>
+                                    <input type="number" placeholder="0" value="${set.reps}" 
+                                           onchange="updateSet(${index}, 'reps', this.value)">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                exercise.sets.forEach((set, index) => {
+                    html += `
+                        <div class="set-item ${set.completed ? 'completed' : ''}">
+                            <div class="set-header">
+                                <span class="set-number">유산소 기록 ${exercise.sets.length > 1 ? index + 1 : ''}</span>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    ${exercise.sets.length > 1 ? `<button class="remove-set-btn" onclick="removeSet(${index}); return false;">삭제</button>` : ''}
+                                    <button class="check-btn ${set.completed ? '' : 'unchecked'}" onclick="toggleSet(${index}); return false;">
+                                        ${set.completed ? '✓' : '○'}
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="set-inputs">
+                                <div class="input-with-label">
+                                    <div class="input-label">거리 (km)</div>
+                                    <input type="number" placeholder="0" value="${set.distance}" 
+                                           onchange="updateSet(${index}, 'distance', this.value)" step="0.1">
+                                </div>
+                                <div class="input-with-label">
+                                    <div class="input-label">시간 (분)</div>
+                                    <input type="number" placeholder="0" value="${set.duration}" 
+                                           onchange="updateSet(${index}, 'duration', this.value)">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            html += `
+                <div class="set-controls">
+                    <button class="add-set-btn" onclick="addSet()">➕ 세트 추가</button>
+                </div>
+            `;
+
+            container.innerHTML = html;
+            updateNextButton();
+        }
+
+        function updateSet(setIndex, field, value) {
+            const exercise = currentSession.exercises[currentSession.currentIndex];
+            exercise.sets[setIndex][field] = parseFloat(value);
+        }
+
+        function toggleSet(setIndex) {
+            const exercise = currentSession.exercises[currentSession.currentIndex];
+            exercise.sets[setIndex].completed = !exercise.sets[setIndex].completed;
+            renderCurrentExercise();
+        }
+
+        function addSet() {
+            const exercise = currentSession.exercises[currentSession.currentIndex];
+            const lastSet = exercise.sets[exercise.sets.length - 1];
+            
+            if (exercise.type === 'strength') {
+                exercise.sets.push({
+                    weight: lastSet ? lastSet.weight : 0,
+                    reps: lastSet ? lastSet.reps : 0,
+                    completed: false
+                });
+            } else {
+                exercise.sets.push({
+                    distance: lastSet ? lastSet.distance : 0,
+                    duration: lastSet ? lastSet.duration : 0,
+                    completed: false
+                });
+            }
+            
+            renderCurrentExercise();
+        }
+
+        function removeSet(setIndex) {
+            console.log('removeSet 호출됨, index:', setIndex);
+            const exercise = currentSession.exercises[currentSession.currentIndex];
+            console.log('현재 세트 개수:', exercise.sets.length);
+            
+            if (exercise.sets.length <= 1) {
+                alert('최소 1개의 세트는 필요합니다!');
+                return;
+            }
+            
+            console.log('삭제 전 세트:', exercise.sets);
+            exercise.sets.splice(setIndex, 1);
+            console.log('삭제 후 세트:', exercise.sets);
+            renderCurrentExercise();
+        }
+
+        function updateNextButton() {
+            const exercise = currentSession.exercises[currentSession.currentIndex];
+            const allCompleted = exercise.sets.every(set => set.completed);
+            const btn = document.getElementById('nextBtn');
+            
+            if (allCompleted) {
+                if (currentSession.currentIndex === currentSession.exercises.length - 1) {
+                    btn.textContent = '운동 완료';
+                    btn.className = 'btn-success next-exercise-btn';
+                } else {
+                    btn.textContent = '다음 운동';
+                    btn.className = 'btn-primary next-exercise-btn';
+                }
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            } else {
+                btn.textContent = '모든 세트를 완료해주세요';
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+            }
+        }
+
+        function nextExercise() {
+            const exercise = currentSession.exercises[currentSession.currentIndex];
+            const allCompleted = exercise.sets.every(set => set.completed);
+            
+            if (!allCompleted) {
+                alert('모든 세트를 완료해주세요!');
+                return;
+            }
+
+            if (currentSession.currentIndex < currentSession.exercises.length - 1) {
+                currentSession.currentIndex++;
+                renderCurrentExercise();
+            } else {
+                showScreen('completeScreen');
+            }
+        }
+
+        function cancelWorkout() {
+            if (confirm('운동을 취소하시겠습니까? 진행 중인 기록은 저장되지 않습니다.')) {
+                selectedExercises = [];
+                currentSession = {
+                    exercises: [],
+                    currentIndex: 0,
+                    startTime: null
+                };
+                renderExerciseGrid();
+                renderSelectedExercises();
+                showScreen('setupScreen');
+            }
+        }
+
+        function finishWorkout() {
+            const sessionDate = currentSession.startTime.toISOString();
+            
+            currentSession.exercises.forEach(exercise => {
+                exercise.sets.forEach((set, index) => {
+                    if (exercise.type === 'strength') {
+                        const workout = {
+                            id: Date.now() + index + Math.random(),
+                            exercise: exercise.name,
+                            type: 'strength',
+                            target: exercise.target,
+                            weight: set.weight,
+                            reps: set.reps,
+                            sets: 1,
+                            date: sessionDate
+                        };
+                        workouts.push(workout);
+                    } else {
+                        const workout = {
+                            id: Date.now() + index + Math.random(),
+                            exercise: exercise.name,
+                            type: 'cardio',
+                            target: exercise.target,
+                            distance: set.distance,
+                            duration: set.duration,
+                            date: sessionDate
+                        };
+                        workouts.push(workout);
+                    }
+                });
+            });
+
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+            alert('운동 기록이 저장되었습니다! 🎉');
+            
+            showScreen('historyScreen');
+            renderCalendar();
+        }
+
+        function resetWorkout() {
+            selectedExercises = [];
+            currentSession = {
+                exercises: [],
+                currentIndex: 0,
+                startTime: null
+            };
+            renderExerciseGrid();
+            renderSelectedExercises();
+            showScreen('setupScreen');
+        }
+
+        function changeMonth(delta) {
+            currentMonth += delta;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar();
+        }
+
+        function switchHistoryTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            if (tab === 'calendar') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('calendarTab').style.display = 'block';
+                document.getElementById('historyTab').style.display = 'none';
+                renderCalendar();
+            } else {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('calendarTab').style.display = 'none';
+                document.getElementById('historyTab').style.display = 'block';
+                displayWorkouts();
+            }
+        }
+
+        function renderCalendar() {
+            const title = document.getElementById('calendarTitle');
+            title.textContent = `${currentYear}년 ${currentMonth + 1}월`;
+
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            const dayHeaders = ['일', '월', '화', '수', '목', '금', '토'];
+            dayHeaders.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'calendar-day header';
+                header.textContent = day;
+                grid.appendChild(header);
+            });
+
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const today = new Date();
+
+            for (let i = 0; i < firstDay; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'calendar-day empty';
+                grid.appendChild(empty);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day active';
+                dayEl.textContent = day;
+
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const workoutsOnDay = workouts.filter(w => {
+                    const workoutDate = new Date(w.date).toISOString().split('T')[0];
+                    return workoutDate === dateStr;
+                });
+
+                if (workoutsOnDay.length > 0) {
+                    dayEl.classList.add('has-workout');
+                    const count = document.createElement('div');
+                    count.className = 'workout-count';
+                    count.textContent = `${workoutsOnDay.length}개`;
+                    dayEl.appendChild(count);
+                }
+
+                if (today.getFullYear() === currentYear && 
+                    today.getMonth() === currentMonth && 
+                    today.getDate() === day) {
+                    dayEl.classList.add('today');
+                }
+
+                if (selectedDate === dateStr) {
+                    dayEl.classList.add('selected');
+                }
+
+                dayEl.onclick = () => selectDate(dateStr, workoutsOnDay);
+                grid.appendChild(dayEl);
+            }
+        }
+
+        function selectDate(dateStr, workoutsOnDay) {
+            selectedDate = dateStr;
+            renderCalendar();
+
+            const container = document.getElementById('selectedDateWorkouts');
+            
+            if (workoutsOnDay.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #999;">
+                        ${dateStr}에는 운동 기록이 없습니다.
+                    </div>
+                `;
+                return;
+            }
+
+            const date = new Date(dateStr);
+            const formattedDate = date.toLocaleDateString('ko-KR', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'long'
+            });
+
+            const groupedByExercise = {};
+            workoutsOnDay.forEach(workout => {
+                if (!groupedByExercise[workout.exercise]) {
+                    groupedByExercise[workout.exercise] = {
+                        type: workout.type,
+                        target: workout.target,
+                        sets: []
+                    };
+                }
+                groupedByExercise[workout.exercise].sets.push(workout);
+            });
+
+            let html = `<div class="date-header">${formattedDate}</div>`;
+            
+            Object.keys(groupedByExercise).forEach(exerciseName => {
+                const exerciseData = groupedByExercise[exerciseName];
+                const sets = exerciseData.sets;
+                const workoutIds = sets.map(s => s.id).join(',');
+                
+                html += `
+                    <div class="workout-item">
+                        <div class="workout-header">
+                            <div>
+                                <span class="workout-name">${exerciseName}</span>
+                                <span class="badge ${exerciseData.type}">${exerciseData.type === 'strength' ? '근력' : '유산소'}</span>
+                            </div>
+                            <button class="delete-btn" onclick="deleteExerciseGroup('${workoutIds}')">삭제</button>
+                        </div>
+                `;
+                
+                sets.forEach(set => {
+                    if (exerciseData.type === 'strength') {
+                        html += `<div class="set-detail">${set.weight}kg × ${set.reps}회</div>`;
+                    } else {
+                        html += `<div class="set-detail">${set.distance}km / ${set.duration}분</div>`;
+                    }
+                });
+                
+                html += `</div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function deleteExerciseGroup(idsString) {
+            if (confirm('이 운동의 모든 세트를 삭제하시겠습니까?')) {
+                const ids = idsString.split(',').map(id => parseFloat(id));
+                workouts = workouts.filter(w => !ids.includes(w.id));
+                localStorage.setItem('workouts', JSON.stringify(workouts));
+                renderCalendar();
+                
+                if (selectedDate) {
+                    const workoutsOnDay = workouts.filter(w => {
+                        const workoutDate = new Date(w.date).toISOString().split('T')[0];
+                        return workoutDate === selectedDate;
+                    });
+                    selectDate(selectedDate, workoutsOnDay);
+                }
+            }
+        }
+
+        function displayWorkouts() {
+            const container = document.getElementById('workoutHistory');
+            
+            if (workouts.length === 0) {
+                container.innerHTML = '<div class="empty-state">아직 기록된 운동이 없습니다.<br>첫 운동을 기록해보세요!</div>';
+                return;
+            }
+
+            const groupedByDate = {};
+            workouts.forEach(workout => {
+                const date = new Date(workout.date).toLocaleDateString('ko-KR');
+                if (!groupedByDate[date]) {
+                    groupedByDate[date] = [];
+                }
+                groupedByDate[date].push(workout);
+            });
+
+            let html = '';
+            Object.keys(groupedByDate).forEach(date => {
+                html += `<div class="date-header">${date}</div>`;
+                
+                const exerciseGroups = {};
+                groupedByDate[date].forEach(workout => {
+                    if (!exerciseGroups[workout.exercise]) {
+                        exerciseGroups[workout.exercise] = {
+                            type: workout.type,
+                            target: workout.target,
+                            sets: []
+                        };
+                    }
+                    exerciseGroups[workout.exercise].sets.push(workout);
+                });
+                
+                Object.keys(exerciseGroups).forEach(exerciseName => {
+                    const exerciseData = exerciseGroups[exerciseName];
+                    const sets = exerciseData.sets;
+                    const workoutIds = sets.map(s => s.id).join(',');
+                    
+                    html += `
+                        <div class="workout-item">
+                            <div class="workout-header">
+                                <div>
+                                    <span class="workout-name">${exerciseName}</span>
+                                    <span class="badge ${exerciseData.type}">${exerciseData.type === 'strength' ? '근력' : '유산소'}</span>
+                                </div>
+                                <button class="delete-btn" onclick="deleteExerciseGroup('${workoutIds}')">삭제</button>
+                            </div>
+                    `;
+                    
+                    sets.forEach(set => {
+                        if (exerciseData.type === 'strength') {
+                            html += `<div class="set-detail">${set.weight}kg × ${set.reps}회</div>`;
+                        } else {
+                            html += `<div class="set-detail">${set.distance}km / ${set.duration}분</div>`;
+                        }
+                    });
+                    
+                    html += `
+                            <div class="workout-date">${new Date(sets[0].date).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}</div>
+                        </div>
+                    `;
+                });
+            });
+
+            container.innerHTML = html;
+        }
+
+        init();
+    </script>
+</body>
+</html>
