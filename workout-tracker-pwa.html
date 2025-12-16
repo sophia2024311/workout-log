@@ -571,6 +571,43 @@
             background: #fce4ec;
             color: #c2185b;
         }
+
+        .exercise-detail-modal {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .memo-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .memo-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .exercise-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .exercise-manage-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
     </style>
 </head>
 <body>
@@ -583,6 +620,7 @@
                 <h2 style="margin-bottom: 15px; color: #333;">오늘의 운동 계획</h2>
                 
                 <button class="btn-secondary" onclick="openExerciseModal()" style="margin-bottom: 15px;">+ 새 운동 추가</button>
+                <button class="btn-secondary" onclick="openManageExercisesModal()" style="margin-bottom: 15px;">⚙️ 운동 관리</button>
 
                 <div class="input-group">
                     <label>운동 선택 (여러 개 선택 가능)</label>
@@ -663,7 +701,7 @@
 
                 <div class="input-group">
                     <label>운동 종류</label>
-                    <select id="modalExerciseType" onchange="updateModalInputs()">
+                    <select id="modalExerciseType">
                         <option value="strength">근력 운동</option>
                         <option value="cardio">유산소 운동</option>
                     </select>
@@ -687,6 +725,41 @@
             </div>
         </div>
 
+        <!-- 운동 상세보기 모달 -->
+        <div id="exerciseDetailModal" class="modal">
+            <div class="modal-content exercise-detail-modal">
+                <h3 id="detailExerciseName"></h3>
+                
+                <div class="exercise-info-row">
+                    <span>운동 종류:</span>
+                    <span id="detailExerciseType"></span>
+                </div>
+                
+                <div class="exercise-info-row">
+                    <span>타겟 부위:</span>
+                    <span id="detailExerciseTarget"></span>
+                </div>
+
+                <div class="memo-section">
+                    <label>메모</label>
+                    <textarea id="detailExerciseMemo" class="memo-textarea" placeholder="이 운동에 대한 메모를 작성하세요..."></textarea>
+                </div>
+
+                <button class="btn-primary" onclick="saveExerciseMemo()">저장</button>
+                <button class="btn-secondary" onclick="closeExerciseDetailModal()">닫기</button>
+            </div>
+        </div>
+
+        <!-- 운동 관리 모달 -->
+        <div id="manageExercisesModal" class="modal">
+            <div class="modal-content">
+                <h3>운동 관리</h3>
+                <p style="color: #666; font-size: 14px; margin-bottom: 15px;">상세 버튼으로 메모 확인, 삭제 버튼으로 운동 제거</p>
+                <div id="manageExercisesList"></div>
+                <button class="btn-secondary" onclick="closeManageExercisesModal()" style="margin-top: 15px;">닫기</button>
+            </div>
+        </div>
+
         <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 999;">
             <button class="btn-secondary" onclick="showScreen('historyScreen'); renderCalendar();" style="padding: 12px 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">기록 보기</button>
         </div>
@@ -694,17 +767,18 @@
 
     <script>
         let exercises = JSON.parse(localStorage.getItem('exercises')) || [
-            {name: '벤치프레스', type: 'strength', target: '가슴'},
-            {name: '스쿼트', type: 'strength', target: '하체'},
-            {name: '데드리프트', type: 'strength', target: '등'},
-            {name: '숄더프레스', type: 'strength', target: '어깨'},
-            {name: '랫풀다운', type: 'strength', target: '등'},
-            {name: '런닝', type: 'cardio', target: '전신'},
-            {name: '사이클', type: 'cardio', target: '하체'}
+            {name: '벤치프레스', type: 'strength', target: '가슴', memo: ''},
+            {name: '스쿼트', type: 'strength', target: '하체', memo: ''},
+            {name: '데드리프트', type: 'strength', target: '등', memo: ''},
+            {name: '숄더프레스', type: 'strength', target: '어깨', memo: ''},
+            {name: '랫풀다운', type: 'strength', target: '등', memo: ''},
+            {name: '런닝', type: 'cardio', target: '전신', memo: ''},
+            {name: '사이클', type: 'cardio', target: '하체', memo: ''}
         ];
         let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
         let selectedExercises = [];
         let currentFilter = 'all';
+        let currentViewExercise = null;
         let currentSession = {
             exercises: [],
             currentIndex: 0,
@@ -827,11 +901,89 @@
                 return;
             }
 
-            exercises.push({name, type, target});
+            exercises.push({name, type, target, memo: ''});
             localStorage.setItem('exercises', JSON.stringify(exercises));
             
             closeExerciseModal();
             renderExerciseGrid();
+        }
+
+        function openExerciseDetailModal(exercise) {
+            currentViewExercise = exercise;
+            document.getElementById('detailExerciseName').textContent = exercise.name;
+            document.getElementById('detailExerciseType').textContent = exercise.type === 'strength' ? '근력 운동' : '유산소 운동';
+            document.getElementById('detailExerciseTarget').textContent = exercise.target;
+            document.getElementById('detailExerciseMemo').value = exercise.memo || '';
+            document.getElementById('exerciseDetailModal').classList.add('active');
+        }
+
+        function closeExerciseDetailModal() {
+            document.getElementById('exerciseDetailModal').classList.remove('active');
+            currentViewExercise = null;
+        }
+
+        function saveExerciseMemo() {
+            if (!currentViewExercise) return;
+            
+            const memo = document.getElementById('detailExerciseMemo').value;
+            const exerciseIndex = exercises.findIndex(e => e.name === currentViewExercise.name);
+            
+            if (exerciseIndex !== -1) {
+                exercises[exerciseIndex].memo = memo;
+                localStorage.setItem('exercises', JSON.stringify(exercises));
+                alert('메모가 저장되었습니다!');
+                closeExerciseDetailModal();
+            }
+        }
+
+        function openManageExercisesModal() {
+            const container = document.getElementById('manageExercisesList');
+            container.innerHTML = '';
+
+            exercises.forEach((exercise) => {
+                const item = document.createElement('div');
+                item.className = 'selected-exercise-item';
+                item.innerHTML = `
+                    <span>
+                        ${exercise.name} <span class="badge ${exercise.type}">${exercise.type === 'strength' ? '근력' : '유산소'}</span>
+                    </span>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="control-btn" onclick="viewExerciseDetail('${exercise.name}')">상세</button>
+                        <button class="remove-btn" onclick="deleteExerciseByName('${exercise.name}')">삭제</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+
+            document.getElementById('manageExercisesModal').classList.add('active');
+        }
+
+        function viewExerciseDetail(exerciseName) {
+            const exercise = exercises.find(e => e.name === exerciseName);
+            if (exercise) {
+                closeManageExercisesModal();
+                openExerciseDetailModal(exercise);
+            }
+        }
+
+        function deleteExerciseByName(exerciseName) {
+            const exercise = exercises.find(e => e.name === exerciseName);
+            
+            if (confirm(`'${exerciseName}' 운동을 삭제하시겠습니까?\n(기존 운동 기록은 유지됩니다)`)) {
+                exercises = exercises.filter(e => e.name !== exerciseName);
+                localStorage.setItem('exercises', JSON.stringify(exercises));
+                
+                // 선택된 운동 목록에서도 제거
+                selectedExercises = selectedExercises.filter(e => e.name !== exerciseName);
+                
+                renderExerciseGrid();
+                renderSelectedExercises();
+                openManageExercisesModal(); // 모달 새로고침
+            }
+        }
+
+        function closeManageExercisesModal() {
+            document.getElementById('manageExercisesModal').classList.remove('active');
         }
 
         function startWorkout() {
