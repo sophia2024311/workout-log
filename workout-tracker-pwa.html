@@ -229,13 +229,14 @@
         }
 
         .calendar-day {
-            aspect-ratio: 1;
+            min-height: 48px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
+            padding: 5px 2px 4px;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             transition: all 0.2s;
             position: relative;
@@ -249,7 +250,7 @@
         .calendar-day.has-workout:hover { transform: scale(1.1); }
         .calendar-day.today { border: 2px solid #667eea; }
         .calendar-day.selected { background: #764ba2; color: white; transform: scale(1.1); }
-        .workout-count { font-size: 10px; opacity: 0.8; }
+        .workout-count { font-size: 9px; opacity: 0.85; line-height: 1.2; }
 
         .workout-item {
             background: #f8f9fa;
@@ -582,22 +583,23 @@
         }
 
         .dominant-target {
-            display: inline-flex;
+            display: flex;
             flex-wrap: wrap;
-            gap: 3px;
-            margin-top: 4px;
+            gap: 2px;
+            margin-top: 2px;
             justify-content: center;
         }
 
         .dominant-target-badge {
-            background: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.28);
             color: white;
-            border-radius: 8px;
-            padding: 1px 6px;
-            font-size: 9px;
+            border-radius: 4px;
+            padding: 0px 4px;
+            font-size: 8px;
             font-weight: 700;
-            border: 1px solid rgba(255,255,255,0.5);
-            letter-spacing: 0.3px;
+            border: 1px solid rgba(255,255,255,0.45);
+            line-height: 1.5;
+            white-space: nowrap;
         }
 
         .history-dominant-badge {
@@ -879,15 +881,19 @@
             {name: '실내 사이클', type: 'cardio', target: '유산소', memo: '', image: ''},
         ];
 
-        // localStorage 전체 초기화 (강제 리셋)
-        localStorage.clear();
-
+        // 운동 목록 버전 관리 (workouts는 유지)
         const EXERCISES_VERSION = '3';
-        let exercises = DEFAULT_EXERCISES;
-        localStorage.setItem('exercises', JSON.stringify(exercises));
-        localStorage.setItem('exercisesVersion', EXERCISES_VERSION);
+        const storedExVer = localStorage.getItem('exercisesVersion');
+        let exercises;
+        if (storedExVer !== EXERCISES_VERSION) {
+            exercises = DEFAULT_EXERCISES;
+            localStorage.setItem('exercises', JSON.stringify(exercises));
+            localStorage.setItem('exercisesVersion', EXERCISES_VERSION);
+        } else {
+            exercises = JSON.parse(localStorage.getItem('exercises') || 'null') || DEFAULT_EXERCISES;
+        }
 
-        let workouts = [];
+        let workouts = JSON.parse(localStorage.getItem('workouts') || '[]');
         let selectedExercises = [];
         let currentFilter = 'cardio';
         let currentViewExercise = null;
