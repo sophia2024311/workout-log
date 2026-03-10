@@ -580,6 +580,42 @@
             font-size: 11px;
             margin-left: 4px;
         }
+
+        .dominant-target {
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-top: 4px;
+            justify-content: center;
+        }
+
+        .dominant-target-badge {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border-radius: 8px;
+            padding: 1px 6px;
+            font-size: 9px;
+            font-weight: 700;
+            border: 1px solid rgba(255,255,255,0.5);
+            letter-spacing: 0.3px;
+        }
+
+        .history-dominant-badge {
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        .history-dominant-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -1501,6 +1537,26 @@
         }
 
         // ── 기록/달력 ──
+        function getDominantTargets(workoutsOnDay) {
+            // 고유 운동 종목별 target 집계 (세트 수 무관, 종목 수 기준)
+            const exerciseTargetMap = {};
+            workoutsOnDay.forEach(w => {
+                exerciseTargetMap[w.exercise] = w.target;
+            });
+            const targetCount = {};
+            Object.values(exerciseTargetMap).forEach(target => {
+                if (!target || target === '유산소') return; // 유산소는 별도 처리
+                targetCount[target] = (targetCount[target] || 0) + 1;
+            });
+            if (Object.keys(targetCount).length === 0) {
+                // 유산소만 있는 경우
+                const hasCardio = workoutsOnDay.some(w => w.type === 'cardio');
+                return hasCardio ? ['유산소'] : [];
+            }
+            const maxCount = Math.max(...Object.values(targetCount));
+            const dominant = Object.keys(targetCount).filter(t => targetCount[t] === maxCount);
+            return dominant;
+        }
         function changeMonth(delta) {
             currentMonth += delta;
             if (currentMonth < 0) { currentMonth = 11; currentYear--; }
@@ -1558,6 +1614,19 @@
                     const uniqueEx = new Set(workoutsOnDay.map(w => w.exercise)).size;
                     cnt.textContent = `${uniqueEx}종`;
                     dayEl.appendChild(cnt);
+                    // 주요 부위 표시
+                    const dominantTargets = getDominantTargets(workoutsOnDay);
+                    if (dominantTargets.length > 0) {
+                        const targetEl = document.createElement('div');
+                        targetEl.className = 'dominant-target';
+                        dominantTargets.forEach(t => {
+                            const badge = document.createElement('span');
+                            badge.className = 'dominant-target-badge';
+                            badge.textContent = t;
+                            targetEl.appendChild(badge);
+                        });
+                        dayEl.appendChild(targetEl);
+                    }
                 }
                 if (today.getFullYear() === currentYear && today.getMonth() === currentMonth && today.getDate() === day) dayEl.classList.add('today');
                 if (selectedDate === dateStr) dayEl.classList.add('selected');
@@ -1576,12 +1645,16 @@
             }
             const date = new Date(dateStr + 'T12:00:00');
             const formattedDate = date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+            const dominantTargets = getDominantTargets(workoutsOnDay);
+            const badgesHtml = dominantTargets.map(t =>
+                `<span class="history-dominant-tag">${t}</span>`
+            ).join('');
             const grouped = {};
             workoutsOnDay.forEach(workout => {
                 if (!grouped[workout.exercise]) grouped[workout.exercise] = { type: workout.type, target: workout.target, sets: [] };
                 grouped[workout.exercise].sets.push(workout);
             });
-            let html = `<div class="date-header">${formattedDate}</div>`;
+            let html = `<div class="date-header">${formattedDate}<span class="history-dominant-badge">${badgesHtml}</span></div>`;
             Object.keys(grouped).forEach(exName => {
                 const exData = grouped[exName];
                 const ids = exData.sets.map(s => s.id).join(',');
@@ -1635,7 +1708,11 @@
             let html = '';
             sortedDates.forEach(dateKey => {
                 const d = new Date(dateKey + 'T12:00:00');
-                html += `<div class="date-header">${d.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' })}</div>`;
+                const dominantTargets = getDominantTargets(groupedByDate[dateKey]);
+                const badgesHtml = dominantTargets.map(t =>
+                    `<span class="history-dominant-tag">${t}</span>`
+                ).join('');
+                html += `<div class="date-header">${d.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' })}<span class="history-dominant-badge">${badgesHtml}</span></div>`;
                 const exGroups = {};
                 groupedByDate[dateKey].forEach(workout => {
                     if (!exGroups[workout.exercise]) exGroups[workout.exercise] = { type: workout.type, target: workout.target, sets: [] };
